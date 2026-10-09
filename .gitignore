@@ -13,6 +13,7 @@ server/dev
 server/wizard
 server/wizard-restore
 server/.wizard.json
+server/tunables.json
 
 __pycache__/
 

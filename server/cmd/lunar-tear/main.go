@@ -12,6 +12,7 @@ import (
 	"lunar-tear/server/internal/gametime"
 	"lunar-tear/server/internal/runtime"
 	"lunar-tear/server/internal/store/sqlite"
+	"lunar-tear/server/internal/tunables"
 )
 
 const masterDataPath = "assets/release/20240404193219.bin.e"
@@ -24,10 +25,24 @@ func main() {
 	authURL := flag.String("auth-url", "", "Auth server base URL for Facebook token validation (e.g. http://localhost:3000)")
 	adminListen := flag.String("admin-listen", "127.0.0.1:8082", "admin webhook listen address (host:port). Loopback by default; only binds when LUNAR_ADMIN_TOKEN is set.")
 	noRegister := flag.Bool("no-register", false, "Disallow new account registrations for clients, when present. Default = false")
+	tunablesPath := flag.String("tunables", "tunables.json", "JSON file overriding odds, prices and pity (see README: Tunables). Missing or empty = built-in defaults.")
 	flag.Parse()
 
 	if *octoURL == "" {
 		log.Fatalf("--octo-url is required (e.g. http://10.0.2.2:8080)")
+	}
+
+	// Tuning has to be in place before the holder is built: gacha prices and
+	// pity are baked into the banner catalog when master data is loaded.
+	tun, err := tunables.Load(*tunablesPath)
+	if err != nil {
+		log.Fatalf("tunables: %v", err)
+	}
+	tun.Apply()
+	if _, statErr := os.Stat(*tunablesPath); statErr == nil {
+		log.Printf("tunables: loaded %s (%s)", *tunablesPath, tun.Summary())
+	} else {
+		log.Printf("tunables: no %s, using built-in defaults (%s)", *tunablesPath, tun.Summary())
 	}
 
 	holder, err := runtime.NewHolder(masterDataPath)

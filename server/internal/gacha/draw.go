@@ -21,7 +21,15 @@ type DrawnItem struct {
 	CharacterId    int32
 }
 
-var premiumRates = []RateTier{
+// PremiumRates is the rarity weight table for premium and step-up draws: one
+// tier per possession type and rarity. Weights are relative - a draw picks
+// against their sum - so the built-in 200/300/500/1000/8000 out of 10000 is 2%
+// costume SSR, 3% weapon SSR, 5% costume SR, 10% weapon SR and 80% weapon R.
+//
+// internal/tunables rewrites these weights at startup. The tier order is not part
+// of that contract, so callers look a tier up by possession type and rarity
+// rather than by index.
+var PremiumRates = []RateTier{
 	{200, int32(model.PossessionTypeCostume), model.RaritySSRare},
 	{300, int32(model.PossessionTypeWeapon), model.RaritySSRare},
 	{500, int32(model.PossessionTypeCostume), model.RaritySRare},
@@ -31,7 +39,7 @@ var premiumRates = []RateTier{
 
 func DrawPremium(bp *masterdata.BannerPool, count int, fixedRarityMin int32, fixedCount int, rateMultiplier float64) []DrawnItem {
 	result := make([]DrawnItem, 0, count)
-	rates := adjustRates(premiumRates, rateMultiplier)
+	rates := adjustRates(PremiumRates, rateMultiplier)
 	totalWeight := 0
 	for _, r := range rates {
 		totalWeight += r.Weight

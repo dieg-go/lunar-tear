@@ -215,6 +215,54 @@ make dev ARGS="--grpc.listen 0.0.0.0:9000 --grpc.public-addr 10.0.2.2:9000"
 | `--auth-url`     | _(empty)_        | Auth server base URL (e.g. `http://localhost:3000`)                         |
 | `--admin-listen` | `127.0.0.1:8082` | Admin webhook listen address. Only binds when `LUNAR_ADMIN_TOKEN` is set.   |
 | `--no-register`  | `false`          | Disable new user registrations (only already registered users can connect). |
+| `--tunables`     | `tunables.json`  | JSON file overriding gacha odds, prices and pity; see [Tunables](#tunables). Missing or empty file = built-in defaults. |
+
+### Tunables
+
+Odds, prices and pity are compiled in, but an operator can override them without rebuilding. At startup the game server reads an optional JSON file: `tunables.json` in its working directory, or whatever `--tunables` points at.
+
+```json
+{
+  "gacha": {
+    "costumeSSRWeight": 500,
+    "weaponSSRWeight": 500,
+    "costumeSRWeight": 500,
+    "weaponSRWeight": 1000,
+    "weaponRWeight": 7500,
+    "featuredRateUpPercent": 50,
+    "pityCeilingCount": 100,
+    "premiumSinglePullPrice": 0,
+    "premiumMultiPullPrice": 0
+  }
+}
+```
+
+Rarity weights are relative, not percentages: they are divided by their sum, so the defaults `200/300/500/1000/8000` out of 10000 are 2% costume SSR, 3% weapon SSR, 5% costume SR, 10% weapon SR and 80% weapon R.
+
+| Field | Default | Meaning |
+| ----- | ------- | ------- |
+| `costumeSSRWeight`, `weaponSSRWeight`, `costumeSRWeight`, `weaponSRWeight`, `weaponRWeight` | `200`, `300`, `500`, `1000`, `8000` | Relative rarity weight per tier |
+| `featuredRateUpPercent` | `35` | Chance that a draw landing on a featured unit's tier yields that unit |
+| `pityCeilingCount` | `200` | Medals at which a banner pays out regardless |
+| `premiumSinglePullPrice` | `300` | Single pull price in gems (`0` makes it free) |
+| `premiumMultiPullPrice` | `3000` | Multi pull price in gems |
+| `premiumMultiPullCount` | `10` | Items drawn per multi pull |
+| `stepUpStep1Cost`, `stepUpStep3Cost`, `stepUpStep5Cost` | `2000`, `3000`, `5000` | Paid-gem cost of the step-up banner's paid steps (the other two are free) |
+| `stepUpRateBoost`, `stepUpRateMaxBoost` | `1.5`, `2.0` | SSR weight multiplier on step-up steps 1 and 3, and on step 5 |
+| `duplicateGradeMin`, `duplicateGradeRange` | `2`, `4` | Duplicate conversion rolls `min + rand(range)` |
+| `dailyDrawLimit` | `5` | Reward-draw cap, used when master data sets no limit |
+| `boxPoolMaxItems`, `boxPoolMinItems` | `50`, `5` | Box gacha pool bounds |
+| `boxItemDefaultMax`, `boxFallbackItemMax` | `10`, `20` | Copies of each box item, and of the fallback item |
+
+Rules:
+
+- Omitted fields keep their built-in defaults, and a missing or empty file means all of them, so a stock install behaves exactly as before.
+- Unknown fields and out-of-range values abort startup and name the offending field. A tuning file that silently does nothing would be worse than one that refuses to run.
+- The effective odds and prices are logged at startup (`tunables: ...`), which is also how you confirm the file was picked up.
+- The file is read once at startup: restart the server to apply a change. The master-data reload endpoint does not re-read it.
+- These are server-side numbers only. The client displays what the server rolls, so nothing here needs a client rebuild.
+
+The defaults live in `server/internal/model/gacha.go` and, for the rarity weights, in `server/internal/gacha/draw.go` (`PremiumRates`); `server/internal/tunables` maps the file onto them.
 
 ### Live Master Data Reload
 

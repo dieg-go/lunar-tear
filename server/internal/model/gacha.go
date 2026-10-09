@@ -64,37 +64,50 @@ const MomBannerDomainGacha int32 = 1
 
 const StepUpGroupDivisor int32 = 1000
 
-const (
+// The values in this block are the compiled-in defaults for the settings
+// documented in internal/tunables: an operator's tunables.json overrides them at
+// startup, and nothing else writes to them. They are variables rather than
+// constants for that reason.
+var (
 	PityCeilingCount int32 = 200
-	MedalCountCap    int32 = 9999
-)
 
-const (
 	PremiumSinglePullPrice int32 = 300
 	PremiumMultiPullPrice  int32 = 3000
 	PremiumMultiPullCount  int32 = 10
-)
 
-const (
 	StepUpStep1Cost int32 = 2000
 	StepUpStep3Cost int32 = 3000
 	StepUpStep5Cost int32 = 5000
-	StepUpFreeCost  int32 = 0
-)
 
-const (
 	FeaturedRateUpPercent int = 35
-	FeaturedRateUpDenom   int = 100
-)
 
-const (
 	StepUpRateBoost    float64 = 1.5
 	StepUpRateMaxBoost float64 = 2.0
-)
 
-const (
 	DupGradeMin   int32 = 2
 	DupGradeRange int   = 4
+
+	DefaultDailyDrawLimit int32 = 5
+
+	BoxPoolMaxItems    int   = 50
+	BoxPoolMinItems    int   = 5
+	BoxItemDefaultMax  int32 = 10
+	BoxFallbackItemMax int32 = 20
+)
+
+// Not knobs: these are semantics or content rather than tuning.
+const (
+	MedalCountCap int32 = 9999
+
+	// StepUpFreeCost is the price of the second and fourth step-up steps.
+	StepUpFreeCost int32 = 0
+
+	// FeaturedRateUpDenom is the denominator FeaturedRateUpPercent is out of; it
+	// stays fixed so the percentage in a tunables file means what it says.
+	FeaturedRateUpDenom int = 100
+
+	// BoxFallbackItemId is granted when a box gacha has too few entries.
+	BoxFallbackItemId int32 = 100001
 )
 
 type DupExchangeEntry struct {
@@ -102,16 +115,6 @@ type DupExchangeEntry struct {
 	PossessionId   int32
 	Count          int32
 }
-
-const DefaultDailyDrawLimit int32 = 5
-
-const (
-	BoxPoolMaxItems    int   = 50
-	BoxPoolMinItems    int   = 5
-	BoxItemDefaultMax  int32 = 10
-	BoxFallbackItemMax int32 = 20
-	BoxFallbackItemId  int32 = 100001
-)
 
 const PhaseIdMultiplier int32 = 10
 
